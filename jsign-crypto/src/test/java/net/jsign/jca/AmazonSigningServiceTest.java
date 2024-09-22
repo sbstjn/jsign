@@ -39,8 +39,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+
 import static net.jadler.Jadler.*;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 public class AmazonSigningServiceTest {
 
@@ -82,6 +86,20 @@ public class AmazonSigningServiceTest {
         List<String> aliases = service.aliases();
 
         assertEquals("aliases", Arrays.asList("2d9ca5b0-6d51-4727-9dfc-186e62e4c5e2", "935ecb66-5c06-495b-babe-5798b1c0e1a8"), aliases);
+    }
+
+    @Test
+    public void testGetEndpointUrl() throws Exception {
+        // Test default endpoint
+        String defaultEndpoint = AmazonSigningService.getEndpointUrl("us-west-2");
+        assertEquals("https://kms.us-west-2.amazonaws.com", defaultEndpoint);
+
+        // Test FIPS endpoint
+        try (MockedStatic<?> mock = mockStatic(AmazonSigningService.class, CALLS_REAL_METHODS)) {
+            when(AmazonSigningService.getenv("AWS_USE_FIPS_ENDPOINT")).thenReturn("true");
+            String fipsEndpoint = AmazonSigningService.getEndpointUrl("us-west-2");
+            assertEquals("https://kms-fips.us-west-2.amazonaws.com", fipsEndpoint);
+        }
     }
 
     @Test
